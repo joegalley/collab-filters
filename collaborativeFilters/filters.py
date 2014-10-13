@@ -115,5 +115,14 @@ class SlopeOne(CollaborativeFilter):
         pass
 
 def RSME(training_data, test_data):
-    return 23432
+    for k_training, v_training in training_data.items():
+        for k_test, v_test in test_data.items():
+            if(k_training == k_test):
+                for rating_training, rating_test in zip(v_training, v_test):
+                    print((rating_training - rating_test) ** 2)
+
+
+                
+        
+             
     pass
