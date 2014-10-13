@@ -1,18 +1,22 @@
 import sys
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 
 
 # abstract base class - must be extended by all
 # types of collaborative filter classes
 class CollaborativeFilter(metaclass=ABCMeta):
     @abstractmethod
-    def readTrainingData(self, tr_data_file):
-        with open(tr_data_file, "r") as f:
+    def readTrainingData(self, data_file):
+        with open(data_file, "r") as f:
             tr_data = [line.strip().split("\t") for line in f]
         return tr_data
+
     @abstractmethod
-    def readTestData(self, test_data):
-        pass
+    def readTestData(self, data_file):
+        with open(data_file, "r") as f:
+            tr_data = [line.strip().split("\t") for line in f]
+        return tr_data
 
     @abstractmethod
     def calculate(self):
@@ -23,37 +27,47 @@ class CollaborativeFilter(metaclass=ABCMeta):
 class Average(CollaborativeFilter):
     """Collaborative filter based on users' average ratings. By definition,
      is independent of user's identity.
-
-    Attributes:
-      attr1 (str): Description of `attr1`.
-      attr2 (list of str): Description of `attr2`.
-      attr3 (int): Description of `attr3`.
-
     """
 
     training_data = None
-    training_data_avg = None
     test_data = None    
-    test_data_avg = None
+
     
     def readTrainingData(self, data):
         self.training_data = super(Average, self).readTrainingData(data)
         flat_list = ([int(x) for x in [i for row in self.training_data for i in row]])
+        users = flat_list[0::4]
         ratings = flat_list[2::4]
-        self.training_data_avg = sum(ratings) / len(ratings)
-        print(self.training_data_avg)
-        
+        z = zip(users, ratings)
+        users_to_ratings = defaultdict(list)
+        for k, v in z:
+            users_to_ratings[k].append(v)
+        '''
+        for k, v in users_to_ratings.items():
+            for i in v:
+                print(k, " ", i)      
+        '''
+        self.training_data = users_to_ratings
+                
 
     def readTestData(self, data):
-        self.test_data = super(Average, self).readTestData(data)
+        self.test_data = super(Average, self).readTrainingData(data)
         flat_list = ([int(x) for x in [i for row in self.test_data for i in row]])
+        users = flat_list[0::4]
         ratings = flat_list[2::4]
-        self.test_data_avg = sum(ratings) / len(ratings)
-        print(self.test_data_avg)
+        z = zip(users, ratings)
+        users_to_ratings = defaultdict(list)
+        for k, v in z:
+            users_to_ratings[k].append(v)
 
+        self.test_data = users_to_ratings
+        
+    def calculateError(self):
+        return RSME(self.training_data, self.test_data)
 
     def calculate():
         pass
+        
         
 
 
@@ -99,3 +113,7 @@ class SlopeOne(CollaborativeFilter):
         pass
     def calculate():
         pass
+
+def RSME(training_data, test_data):
+    return 23432
+    pass
