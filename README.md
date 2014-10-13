@@ -18,5 +18,5 @@ from collaborativeFilters.filters import (
 ```
 
 
-View a demo in ```demo.py```.
+View a demo in [```demo.py```](https://github.com/sponde210/collab-filters/blob/master/demo.py).
 
