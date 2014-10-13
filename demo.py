@@ -22,12 +22,14 @@ def main():
     collab_algo_file = sys.argv[3]
     rmse = 2
 
-
+    '''
     avg = Average()
     avg.readTrainingData(training_data_file)
     avg.readTestData(test_data_file)
-    print(avg.calculateError())
-
+    rmse = avg.calculateError()
+    '''
+    user_euc = UserEucledian()
+    user_euc.readTrainingData(training_data_file)
 
 
     print("\n\nRESULTS Training = ", training_data_file, sep="")
