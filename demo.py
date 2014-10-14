@@ -27,10 +27,12 @@ def main():
     avg.readTrainingData(training_data_file)
     avg.readTestData(test_data_file)
     rmse = avg.calculateError()
-    '''
+    
     user_euc = UserEucledian()
     user_euc.readTrainingData(training_data_file)
-
+    '''
+    item_cosine = ItemCosine()
+    item_cosine.readTrainingData(training_data_file)
 
     print("\n\nRESULTS Training = ", training_data_file, sep="")
     print("RESULTS Testing = ", test_data_file, sep="")

@@ -87,19 +87,24 @@ class UserEucledian(CollaborativeFilter):
 
         # loop through all combinations of 2 users, not matching a user with himself
         first_user_idx = 0
+        sum_diff_sq_user = 0
         for first_user in self.training_data:
             # sum of squared differences in rating for first_user, second_user
-            sum_diff_sq = 0
+            
             second_user_idx = 0
+            sum_diff_sq_item = 0
             for second_user in self.training_data:
-                # true if the user is not himself, and he rated the same item as the second user
+                # true if the user is not himself, and he rated the same item as the second user                
                 if self.training_data[first_user_idx][user_col] != self.training_data[second_user_idx][user_col] and self.training_data[first_user_idx][item_col] == self.training_data[second_user_idx][item_col]:
+                    # the squared difference between first_user and second_user's rating for the same item
                     diff_sq = (int(self.training_data[first_user_idx][rating_col]) - int(self.training_data[second_user_idx][rating_col])) ** 2
-                    sum_diff_sq += diff_sq
+                    sum_diff_sq_item += diff_sq                    
                     if(DEBUG):
                         print("User: ", self.training_data[first_user_idx][user_col], " Item: ", self.training_data[first_user_idx][item_col], " Rating:", self.training_data[first_user_idx][rating_col], "\n", "User:", self.training_data[second_user_idx][user_col], " Item: ", self.training_data[second_user_idx][item_col], " Rating:", self.training_data[second_user_idx][rating_col], "Difference^2: ", str(diff_sq))
-                    print("SUM(diff)^2 for user ", self.training_data[first_user_idx][user_col], "&", self.training_data[second_user_idx][user_col], " = ", sum_diff_sq, "\n")   
-                second_user_idx += 1   
+                second_user_idx += 1  
+            print(sum_diff_sq_item)
+            sum_diff_sq_user += sum_diff_sq_item
+
             first_user_idx += 1
         
 
@@ -122,8 +127,52 @@ class UserPearson(CollaborativeFilter):
 
 
 class ItemCosine(CollaborativeFilter):
-    def readTrainingData(self, tr_data):
-        print("in child")
+    training_data = None
+
+    def readTrainingData(self, data):
+        self.training_data = super(ItemCosine, self).readTrainingData(data)
+        
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        item_to_ratings = defaultdict(list)
+
+        z = zip(items, ratings)
+
+
+        for k, v in z:
+            item_to_ratings[k].append(v)
+        
+
+        item_pairs_to_ratings = {}
+        for item1 in item_to_ratings.items():
+            for item2 in item_to_ratings.items():
+                item_pairs_to_ratings[item1[0], item2[0]] = [None]
+                # don't compare the same item
+                if(item1[0] != item2[0]):
+                    print("one", item1, "two", item2)
+                    item_pairs_to_ratings[item1[0], item2[0]] = [[item1[1]], [item2[1]]]
+                    
+
+        for k, v in item_pairs_to_ratings.items():
+            for i in v:
+                print(k, i)
+
+
+        for k, v in item_pairs_to_ratings.items():
+            z = zip(k, v)
+            for i, j in z:
+                print(i, j)
+
+
+
+                    
+           
+       
     def readTestData(self, tr_data):
         pass
     def calculate():
