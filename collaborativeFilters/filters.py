@@ -117,6 +117,7 @@ class UserEucledian(CollaborativeFilter):
         pass
 
 
+
 class UserPearson(CollaborativeFilter):
     def readTrainingData(self, tr_data):
         print("in child")
@@ -128,6 +129,7 @@ class UserPearson(CollaborativeFilter):
 
 class ItemCosine(CollaborativeFilter):
     training_data = None
+    cosine_similarities = {}
 
     def readTrainingData(self, data):
         self.training_data = super(ItemCosine, self).readTrainingData(data)
@@ -157,46 +159,53 @@ class ItemCosine(CollaborativeFilter):
                     print("one", item1, "two", item2)
                     item_pairs_to_ratings[item1[0], item2[0]] = [item1[1], item2[1]]
                     
-
+        
         for k, v in item_pairs_to_ratings.items():
-            if(k[0] != None and v[0] != None and k[1] != None and v[1] != None):
-                print(k, v)
-                print("key: ", k[0], "val: ", v[0])
-                print("key1: ", k[1], "val: ", v[1])
+            if(k[0] != None and v[0] != None and k[1] != None and v[1] != None and len(v[0]) == len(v[1])):
+                dot_prod = self.dotProduct(v[0], v[1])
+                mag_vec0 = self.vecMagnitude(v[0])
+                mag_vec1 = self.vecMagnitude(v[1])
+                cosine_similarity = dot_prod/(mag_vec0 * mag_vec1)
+                key_table = [k[0][0]]
+                key_table.append(k[1][0])
 
-                self.dotProduct(v[0], v[1])
+                # convert to tuple so it can be hashed & used as dict key
+                key_tuple = tuple(key_table)
+                               
+                self.cosine_similarities[key_tuple] = cosine_similarity
 
                 if(DEBUG):
-                    print("Dot product of ", v[0], " and ", v[1], " = ", self.dotProduct(v[0], v[1]))
-                
-
-
-
-                '''               
-                for i in v:
-                    if i != None and v != None:
-                        for x in i:
-                            print(k, k[0], x)
-                '''
-
-
-
-
-
+                    print("\nItems: ", k[0], k[1])
+                    print("Dot product of ", v[0], " and ", v[1], " = ", dot_prod)
+                    print("vec1 magnitude: ", mag_vec0)
+                    print("vec2 magnitude: ", mag_vec1)
+                    print("Cosine Similarity: ", cosine_similarity)
 
     def dotProduct(self, vec1, vec2):
         if len(vec1) != len(vec2):
             print("ERROR - vector length mismatch")
         else:
-            print("BEFORE", vec1, vec2)
             z = zip(vec1, vec2)
             dot_prod = 0
             for k in z:
-                print("EHRE", k[0], k[1])
                 dot_prod += int(k[0]) * int(k[1]) 
             return dot_prod    
+
+    def vecMagnitude(self, vec):
+        mag = 0
+        for i in vec:
+            mag += int(i) ** 2
+        return sqrt(mag)
+    
+    def showCosineSimilarities(self):
+        print("\nCOSINE SIMILARITIES:")
+        for k in self.cosine_similarities:
+            print(k, self.cosine_similarities[k])
+
            
-       
+         
+
+
     def readTestData(self, tr_data):
         pass
     def calculate():
