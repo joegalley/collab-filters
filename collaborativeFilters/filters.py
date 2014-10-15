@@ -155,22 +155,46 @@ class ItemCosine(CollaborativeFilter):
                 # don't compare the same item
                 if(item1[0] != item2[0]):
                     print("one", item1, "two", item2)
-                    item_pairs_to_ratings[item1[0], item2[0]] = [[item1[1]], [item2[1]]]
+                    item_pairs_to_ratings[item1[0], item2[0]] = [item1[1], item2[1]]
                     
 
         for k, v in item_pairs_to_ratings.items():
-            for i in v:
-                print(k, i)
+            if(k[0] != None and v[0] != None and k[1] != None and v[1] != None):
+                print(k, v)
+                print("key: ", k[0], "val: ", v[0])
+                print("key1: ", k[1], "val: ", v[1])
+
+                self.dotProduct(v[0], v[1])
+
+                if(DEBUG):
+                    print("Dot product of ", v[0], " and ", v[1], " = ", self.dotProduct(v[0], v[1]))
+                
 
 
-        for k, v in item_pairs_to_ratings.items():
-            z = zip(k, v)
-            for i, j in z:
-                print(i, j)
+
+                '''               
+                for i in v:
+                    if i != None and v != None:
+                        for x in i:
+                            print(k, k[0], x)
+                '''
 
 
 
-                    
+
+
+
+    def dotProduct(self, vec1, vec2):
+        if len(vec1) != len(vec2):
+            print("ERROR - vector length mismatch")
+        else:
+            print("BEFORE", vec1, vec2)
+            z = zip(vec1, vec2)
+            dot_prod = 0
+            for k in z:
+                print("EHRE", k[0], k[1])
+                dot_prod += int(k[0]) * int(k[1]) 
+            return dot_prod    
            
        
     def readTestData(self, tr_data):
