@@ -44,11 +44,7 @@ class Average(CollaborativeFilter):
         users_to_ratings = defaultdict(list)
         for k, v in z:
             users_to_ratings[k].append(v)
-        '''
-        for k, v in users_to_ratings.items():
-            for i in v:
-                print(k, " ", i)      
-        '''
+       
         self.training_data = users_to_ratings
                 
 
@@ -145,10 +141,8 @@ class ItemCosine(CollaborativeFilter):
 
         z = zip(items, ratings)
 
-
         for k, v in z:
-            item_to_ratings[k].append(v)
-        
+            item_to_ratings[k].append(v)        
 
         item_pairs_to_ratings = {}
         for item1 in item_to_ratings.items():
@@ -201,10 +195,6 @@ class ItemCosine(CollaborativeFilter):
         print("\nCOSINE SIMILARITIES:")
         for k in self.cosine_similarities:
             print(k, self.cosine_similarities[k])
-
-           
-         
-
 
     def readTestData(self, tr_data):
         pass

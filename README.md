@@ -28,3 +28,4 @@ You can also run this as a stand-alone script to get collaborative filter infomr
 
 View a demo in [```demo.py```](https://github.com/sponde210/collab-filters/blob/master/demo.py)
 
+#### This project is still in development.
