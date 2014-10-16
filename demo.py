@@ -19,25 +19,25 @@ def main():
 
     training_data_file = sys.argv[1]
     test_data_file = sys.argv[2]
-    collab_algo_file = sys.argv[3]
+    collab_algo = sys.argv[3]
     rmse = 2
 
-    '''
-    avg = Average()
-    avg.readTrainingData(training_data_file)
-    avg.readTestData(test_data_file)
-    rmse = avg.calculateError()
-    
-    user_euc = UserEucledian()
-    user_euc.readTrainingData(training_data_file)
-    '''
-    item_cosine = ItemCosine()
-    item_cosine.readTrainingData(training_data_file)
-    item_cosine.showCosineSimilarities()
+    if(collab_algo == "average"):    
+        avg = Average()
+        avg.readTrainingData(training_data_file)
+        avg.readTestData(test_data_file)
+        rmse = avg.calculateError()
+    elif(collab_algo == "user-eucledian"):    
+        user_euc = UserEucledian()
+        user_euc.readTrainingData(training_data_file)
+    elif(collab_algo == "item-cosine"):    
+        item_cosine = ItemCosine()
+        item_cosine.readTrainingData(training_data_file)
+        item_cosine.showCosineSimilarities()
 
     print("\n\nRESULTS Training = ", training_data_file, sep="")
     print("RESULTS Testing = ", test_data_file, sep="")
-    print("RESULTS Algorithm = ", collab_algo_file, sep="")
+    print("RESULTS Algorithm = ", collab_algo, sep="")
     print("RESULTS RMSE = ", rmse, sep="")
 
     

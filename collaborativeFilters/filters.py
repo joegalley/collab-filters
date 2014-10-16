@@ -38,28 +38,34 @@ class Average(CollaborativeFilter):
     def readTrainingData(self, data):
         self.training_data = super(Average, self).readTrainingData(data)
         flat_list = ([int(x) for x in [i for row in self.training_data for i in row]])
-        users = flat_list[0::4]
+        items = flat_list[1::4]
         ratings = flat_list[2::4]
-        z = zip(users, ratings)
-        users_to_ratings = defaultdict(list)
+        z = zip(items, ratings)
+        items_to_ratings = defaultdict(list)
         for k, v in z:
-            users_to_ratings[k].append(v)
+            items_to_ratings[k].append(v)
+
+        for k in items_to_ratings:
+            print(k, items_to_ratings[k])
        
-        self.training_data = users_to_ratings
+        self.training_data = items_to_ratings
                 
 
     def readTestData(self, data):
         self.test_data = super(Average, self).readTrainingData(data)
         flat_list = ([int(x) for x in [i for row in self.test_data for i in row]])
-        users = flat_list[0::4]
+        items = flat_list[1::4]
         ratings = flat_list[2::4]
-        z = zip(users, ratings)
-        users_to_ratings = defaultdict(list)
+        z = zip(items, ratings)
+        items_to_ratings = defaultdict(list)
         for k, v in z:
-            users_to_ratings[k].append(v)
+            items_to_ratings[k].append(v)
 
-        self.test_data = users_to_ratings
-        
+        for k in items_to_ratings:
+            print(k, items_to_ratings[k])
+
+        self.test_data = items_to_ratings
+
     def calculateError(self):
         return RSME(self.training_data, self.test_data)
 
@@ -223,9 +229,13 @@ def RSME(training_data, test_data):
     num_obvs = 0
 
     for k_training, v_training in training_data.items():
+        print("k_training :", k_training, "v_training: ", v_training)
         for k_test, v_test in test_data.items():
+            print("k_test: ", k_test, "v_test: ", v_test)
             if(k_training == k_test):
+                print("Yes")
                 for rating_training, rating_test in zip(v_training, v_test):
+                    print("tr:", rating_training, "test", rating_test)
                     sum_squared_dif += (rating_training - rating_test) ** 2
                     num_obvs += 1
 
