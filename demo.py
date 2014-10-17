@@ -34,6 +34,11 @@ def main():
         item_cosine = ItemCosine()
         item_cosine.readTrainingData(training_data_file)
         item_cosine.showCosineSimilarities()
+    elif(collab_algo == "item-adcosine"):    
+        item_adcosine = ItemAdjustedCosine()
+        item_adcosine.readTrainingData(training_data_file)
+        item_adcosine.getUsersAvgRatings(training_data_file)
+        item_adcosine.showCosineSimilarities()
 
     print("\n\nRESULTS Training = ", training_data_file, sep="")
     print("RESULTS Testing = ", test_data_file, sep="")

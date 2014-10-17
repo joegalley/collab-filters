@@ -148,7 +148,7 @@ class ItemCosine(CollaborativeFilter):
         z = zip(items, ratings)
 
         for k, v in z:
-            item_to_ratings[k].append(v)        
+            item_to_ratings[k].append(v)
 
         item_pairs_to_ratings = {}
         for item1 in item_to_ratings.items():
@@ -208,8 +208,163 @@ class ItemCosine(CollaborativeFilter):
         pass
 
 class ItemAdjustedCosine(CollaborativeFilter):
-    def readTrainingData(self, tr_data):
-        print("in child")
+    training_data = None
+    usr_avg_data = None
+    cosine_similarities = {}
+    user_to_avg_rating = {}
+
+    def readTrainingData(self, data):
+        self.training_data = super(ItemAdjustedCosine, self).readTrainingData(data)
+
+        self.user_to_avg_rating = self.getUsersAvgRatings(data)
+        
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data]
+        users = [row[user_col] for row in self.training_data]
+
+        item_to_ratings = defaultdict(list)
+
+        z = zip(items, ratings, users)
+
+        for item, rating, user in z:
+            print(item, rating, user)
+            item_to_ratings[item].append([rating, user]) 
+
+        for item in item_to_ratings:
+            print("ITEM: ", item, "RATINGS: ", item_to_ratings[item])    
+
+        item_pairs_to_ratings = {}
+        for item1 in item_to_ratings.items():
+            for item2 in item_to_ratings.items():
+                print("1: ", item1, "2: ", item2)
+                item_pairs_to_ratings[item1[0], item2[0]] = [None]
+                # don't compare the same item
+                if(item1[0] != item2[0]):
+                    print("one", item1, "two", item2)
+                    item_pairs_to_ratings[item1[0], item2[0]] = [item1[1], item2[1]]
+                    
+        
+        for k, v in item_pairs_to_ratings.items():
+            if(k[0] != None and v[0] != None and k[1] != None and v[1] != None and len(v[0]) == len(v[1])):
+                
+                print("a;sldfkjsafd", v[0], v[1])
+                dot_prod = self.dotProduct(v[0], v[1])
+                mag_vec0 = self.vecMagnitude(v[0])
+                mag_vec1 = self.vecMagnitude(v[1])
+                cosine_similarity = dot_prod/(mag_vec0 * mag_vec1)
+                key_table = [k[0][0]]
+                key_table.append(k[1][0])
+
+                # convert to tuple so it can be hashed & used as dict key
+                key_tuple = tuple(key_table)
+                               
+                self.cosine_similarities[key_tuple] = cosine_similarity
+
+                if(DEBUG):
+                    print("\nItems: ", k[0], k[1])
+                    
+                    v1 = []
+                    for i in v[0]:
+                        v1.append(i[0])
+                    v2 = []
+                    for i in v[1]:
+                        v2.append(i[0])
+                
+                    print("Dot product of ", v1, " and ", v2, " = ", dot_prod)
+                    print("vec1 magnitude: ", mag_vec0)
+                    print("vec2 magnitude: ", mag_vec1)
+                    print("Cosine Similarity: ", cosine_similarity)
+
+    def dotProduct(self, vec1, vec2):
+        print("v1: ", vec1, "vec2 ", vec2)
+
+        user1 = []
+        for user in vec1:
+            user1.append(user[1])
+
+        user2 = []
+        for user in vec2:
+            user2.append(user[1])
+
+        if len(set(user1)) != 1 or len(set(user2)) != 1:
+            print("ERROR - not comparing rating from the same user")
+
+        user1_ratings_vec = []
+
+        user2_ratings_vec = []
+
+        for rating in vec1:
+            user1_ratings_vec.append(rating[0])
+
+        for rating in vec2:
+            user2_ratings_vec.append(rating[0])
+
+
+
+        if len(user1_ratings_vec) != len(user2_ratings_vec):
+            print("ERROR - vector length mismatch")
+        else:
+            z = zip(user1_ratings_vec, user2_ratings_vec)
+            dot_prod = 0
+            for k in z:
+                print("a", k[0], "b", k[1], "c", self.user_to_avg_rating[user1[0]], "d", self.user_to_avg_rating[user2[0]])
+                dot_prod += float(float(k[0]) - self.user_to_avg_rating[user1[0]]) * float(float(k[1]) - self.user_to_avg_rating[user2[0]]) 
+            return dot_prod    
+
+    def vecMagnitude(self, vec):
+        mag = 0
+
+        for i in vec:
+            print("SDF", i, self.user_to_avg_rating[i[1]])
+            mag += float(int(i[0]) - self.user_to_avg_rating[i[1]]) ** 2
+        return sqrt(mag)
+
+    def getUsersAvgRatings(self, data):
+        self.usr_avg_data = super(ItemAdjustedCosine, self).readTrainingData(data)
+
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        users = [row[user_col] for row in self.usr_avg_data] 
+        ratings = [row[rating_col] for row in self.usr_avg_data] 
+
+        users_to_ratings = defaultdict(list)
+
+        z = zip(users, ratings)
+
+        for k, v in z:
+            users_to_ratings[k].append(v)    
+
+        user_to_avg_rating = {}
+        for user in users_to_ratings:
+            user_to_avg_rating[user] = None
+            avg_rating = 0
+            num_ratings = 0
+            print("USER :", user, "RATINGS: ", users_to_ratings[user])
+            for rating in users_to_ratings[user]:
+                avg_rating += int(rating)
+                num_ratings += 1
+            user_to_avg_rating[user] = avg_rating / num_ratings
+
+        for user in user_to_avg_rating:
+            print("USER: ", user, "AVG RATING: ", user_to_avg_rating[user])
+
+        return user_to_avg_rating
+
+
+    
+    def showCosineSimilarities(self):
+        print("\nCOSINE SIMILARITIES:")
+        for k in self.cosine_similarities:
+            print(k, self.cosine_similarities[k])
+
     def readTestData(self, tr_data):
         pass
     def calculate():
