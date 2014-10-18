@@ -129,23 +129,25 @@ class UserPearson(CollaborativeFilter):
     def calculate():
         pass
 
-
-class ItemCosine(CollaborativeFilter):
-    training_data = None
-    cosine_similarities = {}
-
-    class ItemRatingUser():
+class ItemData():
         item = None
-        rating = None
-        user = None
+        rating_to_user = {}
+        
 
         def __init__(self, item, rating, user):
+            print("init: ", item, rating, user)
             self.item = item
             self.rating = rating
             self.user = user
 
         pass
 
+
+class ItemCosine(CollaborativeFilter):
+    training_data = None
+    cosine_similarities = {}
+
+    
 
 
 
@@ -166,10 +168,18 @@ class ItemCosine(CollaborativeFilter):
 
         z = zip(items, ratings, users)
 
+        item_ratings = []
+
         print("ITEM -- RATING -- USER")
         for item, rating, user in z:
-            print(item, "   ", rating, "       ", user)
+            i_data = ItemData(item, rating, user)
+            item_ratings.append(i_data)
+            print("item", item, "rating", rating, "user       ", user)
             item_to_ratings[item].append([rating, user])
+
+        for ir in item_ratings:
+            print("aaahhh:", ir.item, ir.user, ir.rating)
+
 
         item_pairs_to_ratings = {}
         for item1 in item_to_ratings.items():
@@ -182,10 +192,12 @@ class ItemCosine(CollaborativeFilter):
 
                 # don't compare the same item
                 if(item1[0] != item2[0]):
-                    print("past", item1, item2)
+                    print("\n\nCOMPARING", item1[0], item2[0])
 
 
 
+                    print("before remove: ", item1[1], item2[1])
+                    '''
                     # remove 0 ratings
                     for rating in item1[1]:
                         if(int(rating[0]) == 0):
@@ -193,33 +205,66 @@ class ItemCosine(CollaborativeFilter):
                     for rating in item2[1]:
                         if(int(rating[0]) == 0):
                             item2[1].remove(rating)
-         
+                    '''
                     # LEFT OFF HERE #
 
                     print("after removed:", item1[1], item2[1])
 
-                    for rating in item1[1]:
-                        if rating[1] not in item2[1][1]:
-                            print(rating, "not in 1")
+                    print("yoyo", item1[1], item2[1])
 
+                    '''
+                    for rating in item1[1]:
+                        print("SADLKJDF", rating)
+                        if rating[1] not in item1[1][1]:
+                            print(rating, "not in 1")
+                    '''
                     # only add items which have been rated by the same set of users
                     users_who_rated_item1 = []
                     for rating_and_user in item1[1]:
-                        users_who_rated_item1.append(rating_and_user[1])
+                        print("WATER", rating_and_user[0])
+                        if(int(rating_and_user[0]) != 0):
+                            users_who_rated_item1.append(rating_and_user[1])
                     users_who_rated_item2 = []
                     for rating_and_user in item2[1]:
-                        users_who_rated_item2.append(rating_and_user[1])
+                        if(int(rating_and_user[0]) != 0):
+                            users_who_rated_item2.append(rating_and_user[1])
+
+                    print("USERS WHO RATED ", item1[0],  users_who_rated_item1)
+                    print("USERS WHO RATED ", item2[0],  users_who_rated_item2)
 
                     users_who_rated_both_items = set(users_who_rated_item1).intersection(users_who_rated_item2)
 
                     num_rated_item1_intersect_num_rated_both = set(users_who_rated_item1).intersection(users_who_rated_both_items)
                     num_rated_item2_intersect_num_rated_both = set(users_who_rated_item2).intersection(users_who_rated_both_items)
 
+                    print("Users who rated both items: ", users_who_rated_both_items)
                     print("num1 in", num_rated_item1_intersect_num_rated_both)
                     print("num2 in", num_rated_item2_intersect_num_rated_both)
 
+                    for rating_user in users_who_rated_item1:
+                        print("SSSS", rating_user)
+                        if(rating_user not in users_who_rated_both_items):
+                            users_who_rated_item1.remove(rating_user)
+
+                    for rating_user in users_who_rated_item2[1]:
+                        print("SSSS", rating_user)
+                        if(rating_user not in users_who_rated_both_items):
+                            users_who_rated_item2.remove(rating_user)
+
+                    for i in item1[1]:
+                        print("FAC", i)
+                    for i in item2[1]:
+                        print("FAC", i)
+
+                    users_who_rated_item1_non_zero = []
+                    for i in users_who_rated_item1:
+                        users_who_rated_item1_non_zero.append(i)
+
+                    for i in users_who_rated_item1_non_zero:
+                        print("a", item1[0], i)
+
                     if len(num_rated_item1_intersect_num_rated_both) > 0 or len(num_rated_item2_intersect_num_rated_both) > 0:
-                        print("ADDING", item1[0],":", item1[1], item2[0], ":", item2[1])
+                        print("ADDING", item1[0],":", users_who_rated_item1, item2[0], ":", users_who_rated_item2)
                         item_pairs_to_ratings[item1[0], item2[0]] = [item1[1], item2[1]]
 
                     '''
@@ -253,11 +298,117 @@ class ItemCosine(CollaborativeFilter):
         
         for item, item_and_user in item_pairs_to_ratings.items():
             if item[0] != None and item_and_user[0] != None and item[1] != None and item_and_user[1] != None and len(item_and_user[0]) == len(item_and_user[1]):
-                print("here:", item[0], item_and_user[0], item[1], item_and_user[1])
+                print("WWW:", item[0], item_and_user[0], item[1], item_and_user[1], "WWW")
 
-                dot_prod = self.dotProduct(item_and_user[0], item_and_user[1])
-                mag_vec0 = self.vecMagnitude(item_and_user[0])
-                mag_vec1 = self.vecMagnitude(item_and_user[1])
+                for rating_user in item_and_user[0]:
+                    print("BOTTLE", rating_user)
+
+                users_who_rated_item1_non_zero = []
+                for i in item_and_user[0]:
+                    print(i[0])
+                    if(int(i[0]) != 0):
+                        users_who_rated_item1_non_zero.append(i)
+
+                for i in users_who_rated_item1_non_zero:
+                    print("a", i)
+
+
+                users_who_rated_item2_non_zero = []
+                for i in item_and_user[1]:
+                    print(i[0])
+                    if(int(i[0]) != 0):
+                        users_who_rated_item2_non_zero.append(i)
+
+                for i in users_who_rated_item2_non_zero:
+                    print("ab", i)
+
+                users_who_rated_both_items_non_zero = []
+
+                for rating in users_who_rated_item1_non_zero:
+                    users_who_rated_both_items_non_zero.append(rating[1])
+
+                for rating in users_who_rated_item2_non_zero:
+                    users_who_rated_both_items_non_zero.append(rating[1])
+
+                for user in users_who_rated_both_items_non_zero:
+                    print("OCCU", user)
+
+                users_who_rated_both_items_non_zero_common_to_both_items = []
+
+
+                for user in users_who_rated_both_items_non_zero:
+                    if users_who_rated_both_items_non_zero.count(user) > 1:
+                        users_who_rated_both_items_non_zero_common_to_both_items.append(user)
+
+                users_who_rated_both_items_non_zero_common_to_both_items = (set(users_who_rated_both_items_non_zero_common_to_both_items))
+
+                print("MOUNTAIN:", users_who_rated_item1_non_zero)
+                print("MOUNTAIN2:", users_who_rated_item2_non_zero)
+
+                users_who_rated_item1_non_zero_and_is_common = []
+
+                for rating_user in users_who_rated_item1_non_zero:
+                    if int(rating_user[0]) != 0:
+                        users_who_rated_item1_non_zero_and_is_common.append(rating_user[1])
+
+                for i in users_who_rated_item1_non_zero_and_is_common:
+                    print("JACK", i)
+
+
+                users_who_rated_item2_non_zero_and_is_common = []
+
+                for rating_user in users_who_rated_item2_non_zero:
+                    if int(rating_user[0]) != 0:
+                        users_who_rated_item2_non_zero_and_is_common.append(rating_user[1])
+
+                for i in users_who_rated_item2_non_zero_and_is_common:
+                    print("JACK2", i)
+
+
+
+                rated_1 = []
+                for rating in users_who_rated_item1_non_zero_and_is_common:
+                    rated_1.append(rating[0])
+
+                rated_2 = []
+                for rating in users_who_rated_item2_non_zero_and_is_common:
+                    rated_2.append(rating[0])
+
+                print(rated_1)
+                print(rated_2)
+                rated_1_and_2 = set(rated_1).intersection(rated_2)
+
+                for i in rated_1_and_2:
+                    print(i)
+
+
+                if str(3) in rated_1_and_2:
+                    print("yes")
+                else:
+                    print("No")
+
+
+                for user_rating in users_who_rated_item1_non_zero:
+                    if user_rating[1] not in rated_1_and_2:
+                        users_who_rated_item1_non_zero.remove(user_rating)
+
+                for i in users_who_rated_item1_non_zero:
+                    print(i)
+
+                for user_rating in users_who_rated_item2_non_zero:
+                    if user_rating[1] not in rated_1_and_2:
+                        users_who_rated_item2_non_zero.remove(user_rating)
+
+                for i in users_who_rated_item2_non_zero:
+                    print(i)
+
+
+
+
+
+                dot_prod = self.dotProduct(users_who_rated_item1_non_zero, users_who_rated_item2_non_zero)
+                mag_vec0 = self.vecMagnitude(users_who_rated_item1_non_zero)
+                mag_vec1 = self.vecMagnitude(users_who_rated_item2_non_zero)
                 cosine_similarity = dot_prod/(mag_vec0 * mag_vec1)
                 key_table = [item[0][0]]
                 key_table.append(item[1][0])
@@ -269,7 +420,7 @@ class ItemCosine(CollaborativeFilter):
 
                 if(DEBUG):
                     print("\nItems: ", item[0], item[1])
-                    print("Dot product of ", item_and_user[0], " and ", item_and_user[1], " = ", dot_prod)
+                    print("Dot product of ", users_who_rated_item1_non_zero[0], " and ", users_who_rated_item2_non_zero[0], " = ", dot_prod)
                     print("vec1 magnitude: ", mag_vec0)
                     print("vec2 magnitude: ", mag_vec1)
                     print("Cosine Similarity: ", cosine_similarity)
@@ -285,27 +436,31 @@ class ItemCosine(CollaborativeFilter):
                 v1.append(rating_user[0])
 
             v2 = []
-            for rating_user in vec1:
+            for rating_user in vec2:
                 v2.append(rating_user[0])
+
+            print("CALCULATING DOT PRODUCT OF: ", v1, v2)
 
             z = zip(v1, v2)
             dot_prod = 0
-            for k in z:
-                dot_prod += int(k[0]) * int(k[1]) 
+            for rating in z:
+                dot_prod += int(rating[0]) * int(rating[1]) 
+            print("DOT PRODUCT OF: ", v1, v2, " = ", dot_prod)
             return dot_prod    
 
     def vecMagnitude(self, vec):
-
         # extract ratings from vec with index 0 - [rating, user][rating, user]...[rating, user]
         v = []
         for rating_user in vec:
             v.append(rating_user[0])
 
+        print("CALCULATING MAGNITUDE OF ", v)
 
-        print(v)
+       
         mag = 0
         for i in v:
             mag += int(i) ** 2
+        print("MAGNITUDE OF ", v, " = ", sqrt(mag))
         return sqrt(mag)
     
     def showCosineSimilarities(self):
