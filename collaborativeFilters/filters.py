@@ -243,12 +243,12 @@ class ItemCosine(CollaborativeFilter):
 
                     for rating_user in users_who_rated_item1:
                         print("SSSS", rating_user)
-                        if(rating_user not in users_who_rated_both_items):
+                        if(rating_user not in users_who_rated_both_items and len(users_who_rated_both_items) > 1):
                             users_who_rated_item1.remove(rating_user)
 
                     for rating_user in users_who_rated_item2[1]:
                         print("SSSS", rating_user)
-                        if(rating_user not in users_who_rated_both_items):
+                        if(rating_user not in users_who_rated_both_items and len(users_who_rated_both_items) > 1):
                             users_who_rated_item2.remove(rating_user)
 
                     for i in item1[1]:
@@ -297,7 +297,8 @@ class ItemCosine(CollaborativeFilter):
                     
         
         for item, item_and_user in item_pairs_to_ratings.items():
-            if item[0] != None and item_and_user[0] != None and item[1] != None and item_and_user[1] != None and len(item_and_user[0]) == len(item_and_user[1]):
+            print(item, item_and_user)
+            if item[0] != None and item_and_user[0] != None and item[1] != None and item_and_user[1] != None:
                 print("WWW:", item[0], item_and_user[0], item[1], item_and_user[1], "WWW")
 
                 for rating_user in item_and_user[0]:
@@ -389,7 +390,9 @@ class ItemCosine(CollaborativeFilter):
 
 
                 for user_rating in users_who_rated_item1_non_zero:
+                    print("xx", user_rating[1])
                     if user_rating[1] not in rated_1_and_2:
+                        print("removing", user_rating[1])
                         users_who_rated_item1_non_zero.remove(user_rating)
 
                 for i in users_who_rated_item1_non_zero:
@@ -401,6 +404,60 @@ class ItemCosine(CollaborativeFilter):
 
                 for i in users_who_rated_item2_non_zero:
                     print(i)
+
+                users_who_rated_item1_final = []
+
+
+                for user in users_who_rated_item1_non_zero:
+                    users_who_rated_item1_final.append(user[1])
+
+                users_who_rated_item2_final = []
+
+
+                for user in users_who_rated_item2_non_zero:
+                    users_who_rated_item2_final.append(user[1])
+
+
+                print("as", set(users_who_rated_item1_final))
+                print("as1", set(users_who_rated_item2_final))
+
+
+
+                final_intersection = set(users_who_rated_item1_final).intersection(users_who_rated_item2_final)
+
+                print(final_intersection)
+
+                final_1 = []
+                for user in users_who_rated_item1_final:
+                    if user in final_intersection:
+                        print(user, "in ", final_intersection)
+                        final_1.append(user)
+                
+                for user in final_1:
+                    print('x', user)
+                
+                final_2 = []
+                for user in users_who_rated_item2_final:
+                    if user in final_intersection:
+                        print(user, "in ", final_intersection)
+                        final_2.append(user)
+                
+                for user in final_2:
+                    print('y', user)
+
+                print("v", users_who_rated_item1_non_zero)
+                print("v2", users_who_rated_item2_non_zero)
+
+                for rating_user in users_who_rated_item1_non_zero:
+                    if rating_user[1] not in final_1:
+                        users_who_rated_item1_non_zero.remove(rating_user)
+
+                for rating_user in users_who_rated_item2_non_zero:
+                    if rating_user[1] not in final_2:
+                        users_who_rated_item2_non_zero.remove(rating_user)
+
+                print("w", users_who_rated_item1_non_zero)
+                print("w2", users_who_rated_item2_non_zero)
 
 
 
@@ -426,6 +483,7 @@ class ItemCosine(CollaborativeFilter):
                     print("Cosine Similarity: ", cosine_similarity)
 
     def dotProduct(self, vec1, vec2):
+        print("IN DOTPRODCUT(): ", vec1, vec2)
         if len(vec1) != len(vec2):
             print("ERROR - vector length mismatch")
         
