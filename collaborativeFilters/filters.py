@@ -452,7 +452,10 @@ class ItemCosine(CollaborativeFilter):
                     if rating_user[1] not in final_1:
                         users_who_rated_item1_non_zero.remove(rating_user)
 
+                print("lsdkj", users_who_rated_item2_non_zero)
+
                 for rating_user in users_who_rated_item2_non_zero:
+                    print("why", rating_user[1])
                     if rating_user[1] not in final_2:
                         users_who_rated_item2_non_zero.remove(rating_user)
 
@@ -483,6 +486,34 @@ class ItemCosine(CollaborativeFilter):
                     print("Cosine Similarity: ", cosine_similarity)
 
     def dotProduct(self, vec1, vec2):
+
+        vec1_ratings = []
+        for i in vec1:
+            vec1_ratings.append(i[1])
+
+        vec2_ratings = []
+        for i in vec2:
+            vec2_ratings.append(i[1])
+
+        intersec = set(vec2_ratings).intersection(vec1_ratings)
+
+        for rating in vec1:
+            if(rating[1] not in intersec):
+                vec1.remove(rating)
+
+        for rating in vec2:
+            if(rating[1] not in intersec):
+                vec2.remove(rating)
+
+
+
+
+        print("sl;kdfj;slajf;lasjf;lskdjf", vec1)
+        print("sl;kdfj2222222lskdjf", vec2)
+
+
+
+
         print("IN DOTPRODCUT(): ", vec1, vec2)
         if len(vec1) != len(vec2):
             print("ERROR - vector length mismatch")
