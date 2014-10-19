@@ -39,6 +39,10 @@ def main():
         item_adcosine.readTrainingData(training_data_file)
         item_adcosine.getUsersAvgRatings(training_data_file)
         item_adcosine.showCosineSimilarities()
+    elif(collab_algo == "slope-one"):    
+        slope_one = SlopeOne()
+        slope_one.readTrainingData(training_data_file)
+        
 
     print("\n\nRESULTS Training = ", training_data_file, sep="")
     print("RESULTS Testing = ", test_data_file, sep="")

@@ -246,7 +246,7 @@ class ItemCosine(CollaborativeFilter):
                         if(rating_user not in users_who_rated_both_items and len(users_who_rated_both_items) > 1):
                             users_who_rated_item1.remove(rating_user)
 
-                    for rating_user in users_who_rated_item2[1]:
+                    for rating_user in users_who_rated_item2:
                         print("SSSS", rating_user)
                         if(rating_user not in users_who_rated_both_items and len(users_who_rated_both_items) > 1):
                             users_who_rated_item2.remove(rating_user)
@@ -713,8 +713,89 @@ class ItemAdjustedCosine(CollaborativeFilter):
 
 
 class SlopeOne(CollaborativeFilter):
-    def readTrainingData(self, tr_data):
-        print("in child")
+    training_data = None
+
+    item_list = []
+    item_dict = {}
+    item_matrix = {}
+ 
+
+
+    def readTrainingData(self, data):
+
+        self.training_data = super(SlopeOne, self).readTrainingData(data)
+
+        
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        users = [row[user_col] for row in self.training_data] 
+
+        item_to_ratings = defaultdict(list)
+
+        z = zip(items, ratings, users)
+
+
+        item_list = []
+
+        for item, rating, user in z:
+            self.item_list.append(item)
+
+        for item, rating, user in z:
+            print(item, rating)
+
+        item_set = set(self.item_list)
+
+        item_set = [int(item) for item in item_set]
+
+        for i in item_set:
+            item_to_ratings[i] = i
+
+      
+        z = zip(items, ratings, users)
+
+        self.item_dict = defaultdict(list)
+        for item, rating, user in z:
+            for i in item_to_ratings:
+                if int(item) == int(i):
+                    self.item_dict[item].append(rating)
+
+        for i in self.item_dict.items():
+            # print("z", i[1], end="\n")
+            pass
+
+       
+
+
+        for item1 in self.item_dict.items():
+            for item2 in self.item_dict.items():
+                if item1 != item2 and len(item1[1]) == len(item2[1]):
+                    # print("item1 ", item1[0], item1[1], "item 2", item2[0], item2[1])
+                    diff_per_rating = [int(rating_1) - int(rating_2) for rating_1, rating_2 in zip(item1[1], item2[1])]
+                    # print("diff", item1[0], item2[0], diff_per_rating)
+                    diff = 0
+
+                    for i in diff_per_rating:
+                        diff += abs(i)
+                    # print("here", diff)
+                    items = [item1[0]]
+                    items.append(item2[0])
+                    items = tuple(items)
+                    self.item_matrix[items] = diff / len(item1[1])
+
+        print(sorted(self.item_matrix))
+        print(type(self.item_matrix))
+
+
+
+
+
+
+        
     def readTestData(self, tr_data):
         pass
     def calculate():
