@@ -712,13 +712,29 @@ class ItemAdjustedCosine(CollaborativeFilter):
         pass
 
 
+class UserItemRating(dict):
+    def __getitem__(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
+
+
+
 class SlopeOne(CollaborativeFilter):
     training_data = None
 
     item_list = []
     item_dict = {}
     item_matrix = {}
- 
+    user_items_ratings = {}
+    user_list = []
+    user_item_rating = None
+    item_set = None
+    user2prediction = []
+    uir_predictions = None
+    item_pair_list = []
 
 
     def readTrainingData(self, data):
@@ -734,6 +750,8 @@ class SlopeOne(CollaborativeFilter):
         items = [row[item_col] for row in self.training_data] 
         ratings = [row[rating_col] for row in self.training_data] 
         users = [row[user_col] for row in self.training_data] 
+        self.user_list = set(users)
+
 
         item_to_ratings = defaultdict(list)
 
@@ -750,7 +768,7 @@ class SlopeOne(CollaborativeFilter):
 
         item_set = set(self.item_list)
 
-        item_set = [int(item) for item in item_set]
+        item_set = [item for item in item_set]
 
         for i in item_set:
             item_to_ratings[i] = i
@@ -761,39 +779,127 @@ class SlopeOne(CollaborativeFilter):
         self.item_dict = defaultdict(list)
         for item, rating, user in z:
             for i in item_to_ratings:
-                if int(item) == int(i):
+                if item == i:
                     self.item_dict[item].append(rating)
 
+        z = zip(users, items, ratings)
+
+        self.user_item_rating = UserItemRating()
+        for user, item, rating in z:
+            print(user, item, rating)
+            self.user_item_rating[user][item] =  rating
+
+        for i in range(0, 100):
+            print("\n")
+
+        print(self.user_item_rating)
+
+        for i in range(0, 100):
+            print("\n")
+
+        user = {}
         for i in self.item_dict.items():
             # print("z", i[1], end="\n")
             pass
 
        
-
+       
 
         for item1 in self.item_dict.items():
             for item2 in self.item_dict.items():
-                if item1 != item2 and len(item1[1]) == len(item2[1]):
+                if item1 != item2:
                     # print("item1 ", item1[0], item1[1], "item 2", item2[0], item2[1])
-                    diff_per_rating = [int(rating_1) - int(rating_2) for rating_1, rating_2 in zip(item1[1], item2[1])]
+                    diff_per_rating = [int(rating_1) - int(rating_2) for rating_1, rating_2 in zip(item1[1], item2[1]) if int(rating_1) != 0 and int(rating_2) != 0]
+
+
                     # print("diff", item1[0], item2[0], diff_per_rating)
                     diff = 0
 
                     for i in diff_per_rating:
-                        diff += abs(i)
+                        diff += i
                     # print("here", diff)
                     items = [item1[0]]
                     items.append(item2[0])
                     items = tuple(items)
-                    self.item_matrix[items] = diff / len(item1[1])
+                    print(item1, item2, diff, "\n")
+                    # self.item_matrix[items] = diff / len(set(diff_per_rating))
+                    difference = diff / len(set(diff_per_rating))
+                    # self.item_matrix[1] = len(set(diff_per_rating))
+                    k = []
+                    k.append(difference)
+                    k.append(len(set(diff_per_rating)))
+                    k = tuple(k)
+                
+                    self.item_matrix[items] = k
 
-        print(sorted(self.item_matrix))
-        print(type(self.item_matrix))
+        # self.item_matrix = sorted(self.item_matrix)
+
+
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        users = [row[user_col] for row in self.training_data] 
+
+        self.item_set = set(self.item_list)
+        
+
+        self.uir_predictions = UserItemRating()
+        for user in self.user_list:
+            for item in self.item_list:
+                if self.user_item_rating[user][item] == "0":
+                    self.makePrediction(user, item)
+              
+
+
+
+    def makePrediction(self, user, unrated_item):
+        print("\n\n\n\n\n\nMAKING PRED FOR ", user, unrated_item)
+        for user in self.user_list:
+            for item in self.item_set:
+                    user_rating = self.user_item_rating[user][item]
+                    user_item_rating_pertinent = item
+
+                    for item_pair in self.item_matrix:                      
+
+                            item_user_has_rated = None
+                            for i in self.user_item_rating[user]:
+                                if i in item_pair:
+                                    if self.user_item_rating[user][i] != "0":
+                                        item_user_has_rated = i
+                                        print(i, "is in ", item_pair)
 
 
 
 
+                            self.item_pair_list.append(item_pair)
+                            print("user: ", user, "has rated item", item, " a scored of ", self.item_matrix[item_pair][1] + int(self.user_item_rating[user][item_user_has_rated]))
+                            print("acorn", item_pair[0])
 
+                            print("based on ", item_pair, " he will give it a ", self.item_matrix[item_pair])
+
+                            print("\n\n\n PHONE\n", user, item, "\n\n", self.user_item_rating[user][user_item_rating_pertinent], "\n\n\n")
+
+                            self.uir_predictions[user][item][item_pair] = self.item_matrix[item_pair][0] + int(self.user_item_rating[user][item_user_has_rated])
+                            print("USER", user, "ITEM PAIR", item_pair, "UNRATED ITEM", unrated_item, "PREDICTION",  self.uir_predictions[user][item][item_pair])
+
+        print(self.uir_predictions)
+
+        pass
+
+    def showPredictions(self):
+
+        user_set = set(self.user_list)
+        item_set = set(self.item_list)
+        item_pair_set = set(self.item_pair_list)
+
+
+        for user in user_set:
+            for item in item_set:
+                for item_pair in item_pair_set:
+                    if self.user_item_rating[user][item] == "0" and item == item_pair[0]:
+                        print("USER", user, "WILL RATE", item, "A SCORE OF ", self.uir_predictions[user][item][item_pair], "BASED ON", item_pair[0], "using", item_pair[1])
+
+        print(self.user_item_rating)
 
         
     def readTestData(self, tr_data):

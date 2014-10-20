@@ -1,4 +1,5 @@
 import sys
+import time
 
 from collaborativeFilters.filters import (
     Average,
@@ -22,6 +23,7 @@ def main():
     collab_algo = sys.argv[3]
     rmse = 2
 
+    start = time.time()
     if(collab_algo == "average"):    
         avg = Average()
         avg.readTrainingData(training_data_file)
@@ -42,6 +44,10 @@ def main():
     elif(collab_algo == "slope-one"):    
         slope_one = SlopeOne()
         slope_one.readTrainingData(training_data_file)
+        slope_one.showPredictions()
+    end = time.time()
+
+    print("TIME ELAPSED: ", end - start)
         
 
     print("\n\nRESULTS Training = ", training_data_file, sep="")
