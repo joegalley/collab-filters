@@ -7,11 +7,11 @@ from collaborativeFilters.filters import (
     UserPearson,
     ItemCosine,
     ItemAdjustedCosine,
-    SlopeOne,
-    RSME
+    SlopeOne
 )
 
 
+DEBUG = True
 
 def main():
     if(len(sys.argv) != 4):
@@ -28,7 +28,7 @@ def main():
         avg = Average()
         avg.readTrainingData(training_data_file)
         avg.readTestData(test_data_file)
-        rmse = avg.calculateError()
+        rmse = avg.RMSE()
     elif(collab_algo == "user-eucledian"):    
         user_euc = UserEucledian()
         user_euc.readTrainingData(training_data_file)
@@ -44,16 +44,17 @@ def main():
     elif(collab_algo == "slope-one"):    
         slope_one = SlopeOne()
         slope_one.readTrainingData(training_data_file)
-        slope_one.showPredictions()
+        # slope_one.readTestData(test_data_file)
+        slope_one.itemDifferences()
+        rmse = slope_one.RMSE()
     end = time.time()
 
-    print("TIME ELAPSED: ", end - start)
-        
-
-    print("\n\nRESULTS Training = ", training_data_file, sep="")
-    print("RESULTS Testing = ", test_data_file, sep="")
-    print("RESULTS Algorithm = ", collab_algo, sep="")
-    print("RESULTS RMSE = ", rmse, sep="")
+    print("\n\nMYRESULTS Training = ", training_data_file, sep="")
+    print("MYRESULTS Testing = ", test_data_file, sep="")
+    print("MYRESULTS Algorithm = ", collab_algo, sep="")
+    print("MYRESULTS RMSE = ", rmse, sep="")
+    if DEBUG:
+        print("TIME ELAPSED: ", "{:.2f}".format(end - start),"s")
 
     
 

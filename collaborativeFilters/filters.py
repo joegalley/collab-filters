@@ -21,12 +21,124 @@ class CollaborativeFilter(metaclass=ABCMeta):
             tr_data = [line.strip().split("\t") for line in f]
         return tr_data
 
-    @abstractmethod
-    def calculate(self):
-        pass
+class UserItemRating(dict):
+    def __getitem__(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
 
 
 
+
+class Average(CollaborativeFilter):
+    training_data = None
+    test_data = None
+
+    user_item_rating_training = None
+    user_item_rating_test = None
+
+    training_results = None
+    test_results = None
+
+    def readTrainingData(self, data):
+        self.training_data = super(Average, self).readTrainingData(data)
+
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        users = [row[user_col] for row in self.training_data] 
+
+        z = zip(users, items, ratings)
+
+        user_item_rating = UserItemRating()
+        for user, item, rating in z:
+            user_item_rating[user][item] =  rating
+
+        item2rating = defaultdict(list)
+        for k, v in z:
+            items_to_ratings[k].append(v)
+
+
+        for user in user_item_rating:
+            for item in user_item_rating[user]:
+                for rating in user_item_rating[user][item]:
+                    item2rating[item].append(int(rating))
+
+        self.user_item_rating_training = user_item_rating
+
+        item2avg_rating = {}
+        for item in item2rating:
+            item_rating = 0 
+            times_rated = 0
+            for rating in item2rating[item]:
+                if rating != 0:
+                    item_rating += rating
+                    times_rated += 1
+            item2avg_rating[item] = item_rating / times_rated
+        
+        self.training_results = item2avg_rating
+
+    def readTestData(self, data):
+        self.training_data = super(Average, self).readTrainingData(data)
+
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        users = [row[user_col] for row in self.training_data] 
+
+        z = zip(users, items, ratings)
+
+        user_item_rating = UserItemRating()
+        for user, item, rating in z:
+            user_item_rating[user][item] =  rating
+
+        item2rating = defaultdict(list)
+        for k, v in z:
+            items_to_ratings[k].append(v)
+
+        for user in user_item_rating:
+            for item in user_item_rating[user]:
+                for rating in user_item_rating[user][item]:
+                    item2rating[item].append(int(rating))
+
+        self.user_item_rating_test = user_item_rating
+
+        item2avg_rating = {}
+        for item in item2rating:
+            item_rating = 0 
+            times_rated = 0
+            for rating in item2rating[item]:
+                if rating != 0:
+                    item_rating += rating
+                    times_rated += 1
+            item2avg_rating[item] = item_rating / times_rated
+        
+        self.test_results = item2avg_rating
+
+    def RMSE(self):
+
+        squred_differences = 0
+        rating_diffs = []
+        for user in self.user_item_rating_training:
+            for item in self.user_item_rating_training[user]:
+                for rating in self.user_item_rating_training[user][item]:
+                    if rating == "0":
+                        squred_differences += (float(self.user_item_rating_test[user][item]) - self.training_results[item]) ** 2
+
+        return sqrt(squred_differences / len(self.training_results))
+
+
+'''
 class Average(CollaborativeFilter):
     """Collaborative filter based on users' average ratings. By definition,
      is independent of user's identity.
@@ -38,7 +150,7 @@ class Average(CollaborativeFilter):
     
     def readTrainingData(self, data):
         self.training_data = super(Average, self).readTrainingData(data)
-        flat_list = ([int(x) for x in [i for row in self.training_data for i in row]])
+        flat_list = ([x for x in [i for row in self.training_data for i in row]])
         items = flat_list[1::4]
         ratings = flat_list[2::4]
         z = zip(items, ratings)
@@ -54,7 +166,7 @@ class Average(CollaborativeFilter):
 
     def readTestData(self, data):
         self.test_data = super(Average, self).readTrainingData(data)
-        flat_list = ([int(x) for x in [i for row in self.test_data for i in row]])
+        flat_list = ([x for x in [i for row in self.test_data for i in row]])
         items = flat_list[1::4]
         ratings = flat_list[2::4]
         z = zip(items, ratings)
@@ -72,7 +184,7 @@ class Average(CollaborativeFilter):
 
     def calculate():
         pass
-        
+'''       
         
 
 
@@ -712,16 +824,107 @@ class ItemAdjustedCosine(CollaborativeFilter):
         pass
 
 
-class UserItemRating(dict):
-    def __getitem__(self, item):
-        try:
-            return dict.__getitem__(self, item)
-        except KeyError:
-            value = self[item] = type(self)()
-            return value
+
+
+class SlopeOne(CollaborativeFilter):
+    training_data = None
+    test_data = None
+
+    user_item_rating_training = None
+    user_item_rating_test = None
+
+    training_results = None
+    test_results = None
+
+    def readTrainingData(self, data):
+        self.training_data = super(SlopeOne, self).readTrainingData(data)
+
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        users = [row[user_col] for row in self.training_data] 
+
+        z = zip(items, users, ratings)
+
+        item_user_rating = UserItemRating()
+        for item, user, rating in z:
+            item_user_rating[item][user] =  rating
+
+        print(item_user_rating)
+
+      
+        for item1 in item_user_rating:
+            
+            for item2 in item_user_rating:
+                dif = 0
+                num_ratings = 0
+                
+                print(item1, item2)
+                for user1 in item_user_rating[item1]:
+                    for user2 in item_user_rating[item2]:
+                        if user1 == user2:
+                            if item1 != item2:
+                                
+                                for rating in item_user_rating[item1][user1]:
+                                    print(item1, item2, item_user_rating[item1][user1], item_user_rating[item2][user2])
+                                    if item_user_rating[item1][user1] != "0" and item_user_rating[item2][user2] != "0":
+                                        num_ratings += 1
+                                        dif += (float(item_user_rating[item2][user2]) - float(item_user_rating[item1][user1]))
+                if num_ratings != 0:
+                    print("end", num_ratings, dif / int(num_ratings))               
+                print("DIF:", dif)
 
 
 
+
+    def readTestData(self, data):
+        pass
+    
+
+    def itemDifferences(self):
+        pass
+    
+
+        '''
+        for user1 in self.user_item_rating_training:
+            for user2 in self.user_item_rating_training:
+                count = 0
+                dif = 0
+                for item1 in self.user_item_rating_training[user1]:
+                    for item2 in self.user_item_rating_training[user2]:
+                        if user1 != user2 and item1 != item2:
+                            for rating1 in self.user_item_rating_training[user1][item1]:
+                                for rating2 in self.user_item_rating_training[user2][item2]:
+                                    if rating1 != "0" and rating2 != "0":
+                                        count += 1
+                                        dif += float(rating2) - float(rating1)
+                                        print(user1, user2, item1, rating1, item2, rating2, dif)
+                print("c", count)
+
+        for item1 in item_pair_diffs:
+            for item2 in item_pair_diffs:
+                print(item1, item2, item_pair_diffs[item1][item2])
+        '''
+    def RMSE(self):
+        pass
+        '''
+        squred_differences = 0
+        rating_diffs = []
+        for user in self.user_item_rating_training:
+            for item in self.user_item_rating_training[user]:
+                for rating in self.user_item_rating_training[user][item]:
+                    if rating == "0":
+                        squred_differences += (float(self.user_item_rating_test[user][item]) - self.training_results[item]) ** 2
+
+        return sqrt(squred_differences / len(self.training_results))
+        '''
+
+
+'''
 class SlopeOne(CollaborativeFilter):
     training_data = None
 
@@ -872,14 +1075,13 @@ class SlopeOne(CollaborativeFilter):
 
 
                             self.item_pair_list.append(item_pair)
-                            print("user: ", user, "has rated item", item, " a scored of ", self.item_matrix[item_pair][1] + int(self.user_item_rating[user][item_user_has_rated]))
                             print("acorn", item_pair[0])
 
                             print("based on ", item_pair, " he will give it a ", self.item_matrix[item_pair])
 
                             print("\n\n\n PHONE\n", user, item, "\n\n", self.user_item_rating[user][user_item_rating_pertinent], "\n\n\n")
-
-                            self.uir_predictions[user][item][item_pair] = self.item_matrix[item_pair][0] + int(self.user_item_rating[user][item_user_has_rated])
+                            if(len(self.user_item_rating[user][item_user_has_rated]) > 0):
+                                self.uir_predictions[user][item][item_pair] = self.item_matrix[item_pair][0] + int(str(self.user_item_rating[user][item_user_has_rated]))
                             print("USER", user, "ITEM PAIR", item_pair, "UNRATED ITEM", unrated_item, "PREDICTION",  self.uir_predictions[user][item][item_pair])
 
         print(self.uir_predictions)
@@ -907,6 +1109,7 @@ class SlopeOne(CollaborativeFilter):
     def calculate():
         pass
 
+
 def RSME(training_data, test_data):
     sum_squared_dif = 0
     num_obvs = 0
@@ -922,9 +1125,9 @@ def RSME(training_data, test_data):
                     sum_squared_dif += (rating_training - rating_test) ** 2
                     num_obvs += 1
 
-    rmse = sqrt(sum_squared_dif/num_obvs)
-    return rmse
-                
+    # rmse = sqrt(sum_squared_dif/num_obvs)
+    return 3              
         
              
     pass
+'''
