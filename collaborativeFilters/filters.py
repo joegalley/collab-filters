@@ -321,12 +321,77 @@ class UserPearson(CollaborativeFilter):
                     else:
                         user_similarities_pearson[user1][user2] = user_similarities_pearson_numerator[user1][user2] / user_similarities_pearson_denominator[user1][user2]
     
-        for user1 in user_similarities_pearson_numerator:
-            for user2 in user_similarities_pearson_numerator:
-                if user1 != user2:
-                    print("SIMILARITY (" ,user1, ",", user2, ") = ", user_similarities_pearson[user1][user2], sep="")
+        if DEBUG:
+            for user1 in user_similarities_pearson_numerator:
+                for user2 in user_similarities_pearson_numerator:
+                    if user1 != user2:
+                        print("PEARSON SIMILARITY (" ,user1, ",", user2, ") = ", user_similarities_pearson[user1][user2], sep="")
 
 
+
+        user_unrated_items = defaultdict(list)
+
+        self.actual_data = super(UserPearson, self).readTrainingData(data)
+
+        items = [row[item_col] for row in self.actual_data] 
+        ratings = [row[rating_col] for row in self.actual_data] 
+        users = [row[user_col] for row in self.actual_data] 
+
+        z = zip(users, items, ratings)
+
+        user_item_rating_actual = UserItemRating()
+        for user, item, rating in z:
+            user_item_rating_actual[user][item] =  rating
+
+        for user in user_item_rating_actual:
+            for item in user_item_rating_actual[user]:
+                if user_item_rating_actual[user][item] == "0":
+                    user_unrated_items[user].append(item)
+
+
+        for user in user_unrated_items:
+            for item in user_unrated_items[user]: 
+                sum_user_similarities = 0               
+                for user_p1 in user_similarities_pearson:
+                        if user == user_p1:
+                                for i in user_similarities_pearson[user_p1]:
+                                    sum_user_similarities += user_similarities_pearson[user_p1][i]
+                                    print(user_p1, i, user_similarities_pearson[user_p1][i])
+
+
+        user_user_similarity = UserItemRating()
+        user2_similarities = defaultdict(list)
+
+        for user in set(users):
+            total_sim = 0
+            for user1 in set(users):                
+                if isinstance(user_similarities_pearson[user][user1], float):
+                    total_sim += float(str(user_similarities_pearson[user][user1]))
+                    user2_similarities[user].append(float(str(user_similarities_pearson[user][user1])))
+                    user_user_similarity[user][user1] = float(str(user_similarities_pearson[user][user1]))
+
+
+       
+
+
+        z = zip(items, users, ratings)
+
+        item_user_rating = UserItemRating()
+        for item, user, rating in z:
+            item_user_rating[item][user] = rating
+
+
+
+        for user in user_item_rating:
+            for user1 in user_user_similarity:
+                if user != user1:
+                    print("sim", user, user1, user_user_similarity[user][user1])
+                    for item in user_item_rating[user]:
+                        if user_item_rating[user][item] == "0":
+                            print(user, item, user_item_rating[user][item])
+
+
+                
 
     def readTestData(self, tr_data):
         pass
@@ -928,6 +993,8 @@ class SlopeOne(CollaborativeFilter):
     training_results = None
     test_results = None
 
+    rmse = None
+
     def readTrainingData(self, data):
         self.training_data = super(SlopeOne, self).readTrainingData(data)
 
@@ -951,6 +1018,8 @@ class SlopeOne(CollaborativeFilter):
 
         item_pair2similarity = UserItemRating()
 
+        num_ratings_per_pair = UserItemRating()
+
 
       
         for item1 in item_user_rating:
@@ -967,13 +1036,8 @@ class SlopeOne(CollaborativeFilter):
                                         num_ratings += 1
                                         dif += (float(item_user_rating[item2][user2]) - float(item_user_rating[item1][user1]))
                 if num_ratings != 0:
+                    num_ratings_per_pair[item1][item2] = float(num_ratings)
                     item_pair2similarity[item2][item1] = dif / int(num_ratings)
-
-
-        # print(item_pair2similarity)
-
-     
-
 
 
         y = zip(users, items, ratings)
@@ -996,17 +1060,53 @@ class SlopeOne(CollaborativeFilter):
                                         user_predictions[user][item][item_i2] = float(user_item_rating[user][item_i2]) + abs(float(str(item_pair2similarity[item][item_i2])))
 
        
+        user_predictions_final = UserItemRating()
 
         if DEBUG:
             for user in user_predictions:
                 print("USER:", user)
                 for item in user_predictions[user]:
+                    sim_numerator = 0
+                    sim_denom = 0
                     for item2 in user_predictions[user][item]:
                         print("will rate", item,"a", user_predictions[user][item][item2], "based on", item2)
+                        sim_numerator += (user_predictions[user][item][item2] * num_ratings_per_pair[item][item2])
+                        sim_denom += num_ratings_per_pair[item][item2]
                     print("\n")
+                    user_predictions_final[user][item] = sim_numerator / sim_denom
+
+
+        print("FINAL PREDICTIONS (used for RMSE):\n")
+        for user in user_predictions_final:
+            for item in user_predictions_final[user]:
+                print("(", user, ",",item,") = ", user_predictions_final[user][item], sep="")
+
+
+        
 
 
 
+        self.actual_data = super(SlopeOne, self).readTrainingData(data)
+
+        items = [row[item_col] for row in self.actual_data] 
+        ratings = [row[rating_col] for row in self.actual_data] 
+        users = [row[user_col] for row in self.actual_data] 
+
+        z = zip(users, items, ratings)
+
+        user_item_rating_actual = UserItemRating()
+        for item, user, rating in z:
+            user_item_rating_actual[item][user] =  rating
+
+        sum_squared_difs = 0
+        for user1 in user_predictions_final:
+            for item1 in user_predictions_final[user1]:
+                for user2 in user_item_rating_actual:
+                    for item2 in user_item_rating_actual[user2]:
+                        if user1 == user2 and item1 == item2:
+                            sum_squared_difs += (float(user_item_rating_actual[user1][item1]) - float(user_predictions_final[user1][item1])) ** 2
+
+        self.rmse = sqrt((sum_squared_difs / len(set(items))))
 
 
     def readTestData(self, data):
@@ -1015,6 +1115,9 @@ class SlopeOne(CollaborativeFilter):
 
     def itemDifferences(self):
         pass
+
+    def RMSE(self):
+        return self.rmse
     
 
         '''
@@ -1037,20 +1140,7 @@ class SlopeOne(CollaborativeFilter):
             for item2 in item_pair_diffs:
                 print(item1, item2, item_pair_diffs[item1][item2])
         '''
-    def RMSE(self):
-        pass
-        '''
-        squred_differences = 0
-        rating_diffs = []
-        for user in self.user_item_rating_training:
-            for item in self.user_item_rating_training[user]:
-                for rating in self.user_item_rating_training[user][item]:
-                    if rating == "0":
-                        squred_differences += (float(self.user_item_rating_test[user][item]) - self.training_results[item]) ** 2
-
-        return sqrt(squred_differences / len(self.training_results))
-        '''
-
+    
 
 '''
 class SlopeOne(CollaborativeFilter):
