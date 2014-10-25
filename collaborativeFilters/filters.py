@@ -234,8 +234,100 @@ class UserEucledian(CollaborativeFilter):
 
 
 class UserPearson(CollaborativeFilter):
-    def readTrainingData(self, tr_data):
-        print("in child")
+
+    def readTrainingData(self, data):
+        self.training_data = super(UserPearson, self).readTrainingData(data)
+
+        user_col = 0
+        item_col = 1
+        rating_col = 2
+        timestamp_col = 3
+
+        items = [row[item_col] for row in self.training_data] 
+        ratings = [row[rating_col] for row in self.training_data] 
+        users = [row[user_col] for row in self.training_data] 
+
+        z = zip(users, items, ratings)
+
+        user_item_rating = UserItemRating()
+        for user, item, rating in z:
+            user_item_rating[user][item] =  rating
+
+        user_similarities_pearson_numerator = UserItemRating()
+
+        for user1 in user_item_rating:
+            for user2 in user_item_rating:
+                num_similar_items = 0
+                sum_products = 0
+                u1_item = None
+                u2_item = None
+                u1_ratings = []
+                u2_ratings = []
+                for item1 in user_item_rating[user1]:
+                    u1_item = item1
+                    for item2 in user_item_rating[user2]:
+                        u2_item = item2
+                        if user1 != user2 and item1 == item2:
+                            for rating1 in user_item_rating[user1][item1]:
+                                for rating2 in user_item_rating[user2][item2]:
+                                    if rating1 != "0" and rating2 !="0":
+                                        u1_ratings.append(float(user_item_rating[user1][item1]))
+                                        u2_ratings.append(float(user_item_rating[user2][item2]))
+                                        num_similar_items += 1
+                                        sum_products += (float(rating1) * float(rating2))
+                user_similarities_pearson_numerator[user1][user2] = num_similar_items * sum_products - sum(u1_ratings) * sum(u2_ratings)
+
+
+         
+        user_similarities_pearson_denominator = UserItemRating()
+
+        for user1 in user_item_rating:
+            for user2 in user_item_rating:
+                num_similar_items = 0
+                sum_products = 0
+                u1_item = None
+                u2_item = None
+                u1_ratings = []
+                u2_ratings = []
+                for item1 in user_item_rating[user1]:
+                    u1_item = item1
+                    for item2 in user_item_rating[user2]:
+                        u2_item = item2
+                        if user1 != user2 and item1 == item2:
+                            for rating1 in user_item_rating[user1][item1]:
+                                for rating2 in user_item_rating[user2][item2]:
+                                    if rating1 != "0" and rating2 !="0":
+                                        u1_ratings.append(float(user_item_rating[user1][item1]))
+                                        u2_ratings.append(float(user_item_rating[user2][item2]))
+                                        num_similar_items += 1
+                u1_ratings_squared = sum([x ** 2 for x in u1_ratings])
+                u2_ratings_squared = sum([x ** 2 for x in u2_ratings])
+                u1_ratings_squared = u1_ratings_squared * num_similar_items
+                u2_ratings_squared = u2_ratings_squared * num_similar_items
+                u1_ratings_sum = sum([float(x) for x in u1_ratings])
+                u2_ratings_sum = sum([float(x) for x in u2_ratings])
+                u1_ratings_sum = u1_ratings_sum ** 2
+                u2_ratings_sum = u2_ratings_sum ** 2
+                user_similarities_pearson_denominator[user1][user2] = sqrt((u1_ratings_squared - u1_ratings_sum) * (u2_ratings_squared - u2_ratings_sum))
+
+
+        user_similarities_pearson = UserItemRating()
+
+        for user1 in set(users):
+            for user2 in set(users):
+                if user1 != user2:
+                    if user_similarities_pearson_numerator[user1][user2] == 0:
+                        user_similarities_pearson[user1][user2] = 0
+                    else:
+                        user_similarities_pearson[user1][user2] = user_similarities_pearson_numerator[user1][user2] / user_similarities_pearson_denominator[user1][user2]
+    
+        for user1 in user_similarities_pearson_numerator:
+            for user2 in user_similarities_pearson_numerator:
+                if user1 != user2:
+                    print("SIMILARITY (" ,user1, ",", user2, ") = ", user_similarities_pearson[user1][user2], sep="")
+
+
+
     def readTestData(self, tr_data):
         pass
     def calculate():
@@ -854,29 +946,65 @@ class SlopeOne(CollaborativeFilter):
         for item, user, rating in z:
             item_user_rating[item][user] =  rating
 
-        print(item_user_rating)
+
+
+
+        item_pair2similarity = UserItemRating()
+
 
       
         for item1 in item_user_rating:
             
             for item2 in item_user_rating:
                 dif = 0
-                num_ratings = 0
-                
-                print(item1, item2)
+                num_ratings = 0                
                 for user1 in item_user_rating[item1]:
                     for user2 in item_user_rating[item2]:
                         if user1 == user2:
-                            if item1 != item2:
-                                
+                            if item1 != item2:                                
                                 for rating in item_user_rating[item1][user1]:
-                                    print(item1, item2, item_user_rating[item1][user1], item_user_rating[item2][user2])
                                     if item_user_rating[item1][user1] != "0" and item_user_rating[item2][user2] != "0":
                                         num_ratings += 1
                                         dif += (float(item_user_rating[item2][user2]) - float(item_user_rating[item1][user1]))
                 if num_ratings != 0:
-                    print("end", num_ratings, dif / int(num_ratings))               
-                print("DIF:", dif)
+                    item_pair2similarity[item2][item1] = dif / int(num_ratings)
+
+
+        # print(item_pair2similarity)
+
+     
+
+
+
+        y = zip(users, items, ratings)
+
+        user_item_rating = UserItemRating()
+        for user, item, rating in y:
+            user_item_rating[user][item] =  rating
+        
+
+        user_predictions = UserItemRating()
+        
+        for user in user_item_rating:
+            for item in user_item_rating[user]:
+                for rating in user_item_rating[user][item]:
+                    if rating == "0":
+                        for item_i in item_pair2similarity:                            
+                            if item_i != item:
+                                for item_i2 in item_pair2similarity[item_i]:
+                                    if item != item_i2:
+                                        user_predictions[user][item][item_i2] = float(user_item_rating[user][item_i2]) + abs(float(str(item_pair2similarity[item][item_i2])))
+
+       
+
+        if DEBUG:
+            for user in user_predictions:
+                print("USER:", user)
+                for item in user_predictions[user]:
+                    for item2 in user_predictions[user][item]:
+                        print("will rate", item,"a", user_predictions[user][item][item2], "based on", item2)
+                    print("\n")
+
 
 
 
