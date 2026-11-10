@@ -1,0 +1,18 @@
+[project]
+name = "collab-filters"
+version = "0.1.0"
+description = "Collaborative filtering algorithms: item averages and weighted Slope One."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Joe Galley" }]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["collaborativeFilters*"]

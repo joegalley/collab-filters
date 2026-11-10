@@ -1,7 +1,4 @@
 data/
-~.pyc
-
-out.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -42,6 +39,7 @@ htmlcov/
 .tox/
 .coverage
 .cache
+.pytest_cache/
 nosetests.xml
 coverage.xml
 
